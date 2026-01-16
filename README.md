@@ -87,7 +87,7 @@ Exploratory correlations between metrics and selection status.
 ### 7. Dashboard
 Interactive Excel dashboard with:
 
-- Selection overview  
+- Selection overview ![Dashboard](dashboard_screenshoot/selection_overview.png) 
 - KPI comparison  
 - Category-based evaluation  
 - Numeric parameter drilldown  
