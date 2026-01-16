@@ -107,7 +107,7 @@ Interactive Excel dashboard with:
 
 ## Dashboard Preview
 
-dashboard_screenshoot
+![Dashboard Preview](dashboard_screenshoot/selection_overview.png)
 
 ---
 
