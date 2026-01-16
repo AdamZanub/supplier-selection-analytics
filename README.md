@@ -107,7 +107,7 @@ Interactive Excel dashboard with:
 
 ## Dashboard Preview
 
-![Dashboard Preview](dashboard_screenshoot/KPIs_overview_accuracy.png)
+![Dashboard Preview](dashboard_screenshoot/dashboard_preview.png)
 
 ---
 
