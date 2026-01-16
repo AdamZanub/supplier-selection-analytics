@@ -1,0 +1,92 @@
+let
+    Source = SupplyChainData,
+
+    // 1. Risk Category Distribution
+    RiskGrouped = Table.Group(
+        Source,
+        {"selection_status", "risk_category"},
+        {{"count", each Table.RowCount(_), Int64.Type}}
+    ),
+    RiskLabeled = Table.AddColumn(RiskGrouped, "category_type", each "risk", type text),
+    RiskRenamed = Table.RenameColumns(RiskLabeled, {"risk_category", "category"}),
+
+    // 2. Value Category Distribution
+    ValueGrouped = Table.Group(
+        Source,
+        {"selection_status", "value_category"},
+        {{"count", each Table.RowCount(_), Int64.Type}}
+    ),
+    ValueLabeled = Table.AddColumn(ValueGrouped, "category_type", each "value", type text),
+    ValueRenamed = Table.RenameColumns(ValueLabeled, {"value_category", "category"}),
+
+    // 3. Price Category Distribution
+    PriceGrouped = Table.Group(
+        Source,
+        {"selection_status", "price_category"},
+        {{"count", each Table.RowCount(_), Int64.Type}}
+    ),
+    PriceLabeled = Table.AddColumn(PriceGrouped, "category_type", each "price", type text),
+    PriceRenamed = Table.RenameColumns(PriceLabeled, {"price_category", "category"}),
+
+    // 4. Lead Time Category Distribution
+    LeadTimeGrouped = Table.Group(
+        Source,
+        {"selection_status", "lead_time_category"},
+        {{"count", each Table.RowCount(_), Int64.Type}}
+    ),
+    LeadTimeLabeled = Table.AddColumn(LeadTimeGrouped, "category_type", each "lead_time", type text),
+    LeadTimeRenamed = Table.RenameColumns(LeadTimeLabeled, {"lead_time_category", "category"}),
+
+    // 5. Fulfillment Category Distribution
+    FulfillmentGrouped = Table.Group(
+        Source,
+        {"selection_status", "fulfillment_category"},
+        {{"count", each Table.RowCount(_), Int64.Type}}
+    ),
+    FulfillmentLabeled = Table.AddColumn(FulfillmentGrouped, "category_type", each "fulfillment", type text),
+    FulfillmentRenamed = Table.RenameColumns(FulfillmentLabeled, {"fulfillment_category", "category"}),
+
+    // 6. Combine all Category Distributions
+    Combined = Table.Combine({
+        RiskRenamed,
+        ValueRenamed,
+        PriceRenamed,
+        LeadTimeRenamed,
+        FulfillmentRenamed
+    }),
+
+    // 7. Compute Totals per category_type
+    Totals = Table.Group(
+        Combined,
+        {"category_type"},
+        {{"totals", each List.Sum([count]), Int64.Type}}
+    ),
+
+    // 8. Merge Totals Back Into Main Table
+    Merged = Table.NestedJoin(
+        Combined,
+        {"category_type"},
+        Totals,
+        {"category_type"},
+        "total_count",
+        JoinKind.LeftOuter
+    ),
+
+    // 9. Expand Totals
+    Expanded = Table.ExpandTableColumn(Merged, "total_count", {"totals"}),
+
+    // 10. Add Percentage Column
+    AddPercentage = Table.AddColumn(
+        Expanded,
+        "percentage_count",
+        each Number.Round(([count] / [totals]) * 100, 2),
+        type number
+    ),
+
+    // 11. Reorder Columns
+    Final = Table.ReorderColumns(
+        AddPercentage,
+        {"category_type", "selection_status", "category", "count", "totals", "percentage_count"}
+    )
+in
+    Final

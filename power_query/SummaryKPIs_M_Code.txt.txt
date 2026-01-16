@@ -1,0 +1,45 @@
+let
+    Source = SupplyChainData,
+    // Create selected suppliers table:
+    #"Create Selected Suppliers Table" = Table.SelectRows(
+        #"Source",
+        each [selected_supplier_flag] = 1
+),
+   // Create rejected suppliers table:
+   #"Create Rejected Suppliers Table" = Table.SelectRows(
+       #"Source",
+       each [selected_supplier_flag] = 0
+
+),
+   // Build a summary comparison table:
+   #"Summary" = Table.FromRecords({
+       [
+           Category = "Selected",
+           Suppliers Count = Table.RowCount(#"Create Selected Suppliers Table"),
+           Avg Delivery Performance = List.Average(#"Create Selected Suppliers Table"[delivery_performance_score]),
+           Avg Accuracy = List.Average(#"Create Selected Suppliers Table"[order_accuracy]),
+           Avg Risk = List.Average(#"Create Selected Suppliers Table"[risk_score]),
+           Avg OTIF = List.Average(#"Create Selected Suppliers Table"[on_time_in_full]),
+           Avg Value = List.Average(#"Create Selected Suppliers Table"[value_score]),
+           Avg Fulfillment = List.Average(#"Create Selected Suppliers Table"[fulfillment_ratio percentage]),
+           Avg shipping_cost = List.Average(#"Create Selected Suppliers Table"[shipping_cost_estimate]),
+           Avg Total Cost Impact = List.Average(#"Create Selected Suppliers Table"[total_cost_impact]),
+           Avg Customer Satisfication = List.Average(#"Create Selected Suppliers Table"[customer_satisfaction_estimate])
+       ]
+       ,
+       [
+           Category = "Rejected",
+           Suppliers Count = Table.RowCount(#"Create Rejected Suppliers Table"),
+           Avg Delivery Performance = List.Average(#"Create Rejected Suppliers Table"[delivery_performance_score]),
+           Avg Accuracy = List.Average(#"Create Rejected Suppliers Table"[order_accuracy]),
+           Avg OTIF = List.Average(#"Create Rejected Suppliers Table"[on_time_in_full]),
+           Avg Risk = List.Average(#"Create Rejected Suppliers Table"[risk_score]),
+           Avg Value = List.Average(#"Create Rejected Suppliers Table"[value_score]),
+           Avg Fulfillment = List.Average(#"Create Rejected Suppliers Table"[fulfillment_ratio percentage]),
+           Avg shipping_cost = List.Average(#"Create Rejected Suppliers Table"[shipping_cost_estimate]),
+           Avg Total Cost Impact = List.Average(#"Create Rejected Suppliers Table"[total_cost_impact]),
+           Avg Customer Satisfication = List.Average(#"Create Rejected Suppliers Table"[customer_satisfaction_estimate])
+       ]
+   })
+in
+    #"Summary"

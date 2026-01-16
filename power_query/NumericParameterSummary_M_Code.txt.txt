@@ -1,0 +1,99 @@
+let
+    Source =  SupplyChainData,
+
+    // 2. Add SelectionStatus column
+    // Convert the 1/0 flag into readable labels: "Selected" or "Rejected"
+    #"AddStatus" =
+        Table.AddColumn(
+            #"Source",
+            "SelectionStatus",
+            each if [selected_supplier_flag] = 1 then "Selected" else "Rejected",
+            type text
+),
+    // 3. Identify numeric columns
+        NumericColumns = {
+    "price_per_unit",
+    "quality_score",
+    "delivery_time_days",
+    "on_time_delivery_rate",
+    "defect_rate",
+    "return_rate",
+    "lead_time_variance",
+    "forecast_accuracy",
+    "seasonality_index",
+    "demand_volatility_index",
+    "order_frequency_monthly",
+    "avg_order_volume",
+    "payment_term_days",
+    "offer_validity_days",
+    "items_requested",
+    "items_offered",
+    "supplier_reliability_score"
+           },
+
+    // 4. Unpivot numeric columns
+    // This transforms all numeric columns into two columns:
+    // "Parameter" (column name) and "Value" (numeric value)
+    #"Unpivoted" =
+        Table.Unpivot(
+            #"AddStatus",
+            NumericColumns,
+            "Parameter",
+            "Value"
+),
+
+    // 5. Group by Parameter + SelectionStatus and compute averages
+    // For each parameter, calculate:
+    // - Average for Selected suppliers
+    // - Average for Rejected suppliers
+    #"Grouped" =
+        Table.Group(
+            #"Unpivoted",
+            {"Parameter", "SelectionStatus"},
+            {{"AvgValue", each List.Average([Value]), type number}}
+),
+
+    // 6. Pivot SelectionStatus into two columns
+    // Turns this:
+    //   Parameter | SelectionStatus | AvgValue
+    // Into this:
+    //   Parameter | Selected | Rejected
+    #"Pivoted" =
+        Table.Pivot(
+            #"Grouped",
+            List.Distinct(Grouped[SelectionStatus]),
+            "SelectionStatus",
+            "AvgValue"
+),
+
+    // 7. Add Difference column (Selected - Rejected)
+    // Shows how much better or worse Selected suppliers perform
+    #"AddDifference" =
+        Table.AddColumn(
+            #"Pivoted",
+            "Difference",
+            each [Selected] - [Rejected],
+            type number
+),
+
+    // 8. Add Percentage Difference column
+    // Formula: (Selected - Rejected) / Rejected * 100
+    // Includes protection against division by zero
+    #"AddPercentageDifference" =
+        Table.AddColumn(
+            #"AddDifference",
+            "Percentage Difference",
+            each if [Rejected] = 0
+                 then null
+                 else Number.Round((([Selected] - [Rejected]) / [Rejected]) * 100, 2),
+            type number
+),
+
+    // 9. Reorder columns for a clean final output
+    #"Final" =
+        Table.ReorderColumns(
+            #"AddPercentageDifference",
+            {"Parameter", "Selected", "Rejected", "Difference", "Percentage Difference"}
+        )
+in
+    #"Final"
