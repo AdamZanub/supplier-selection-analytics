@@ -107,7 +107,7 @@ Interactive Excel dashboard with:
 
 ## Dashboard Preview
 
-*(Screenshots will appear here once uploaded to GitHub)*
+*dashboard_screenshoot*
 
 ---
 
